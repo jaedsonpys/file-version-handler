@@ -5,6 +5,8 @@
 
 import os
 from datetime import datetime
+from random import randint, choice
+from string import ascii_letters
 
 import sys
 import json
@@ -43,6 +45,16 @@ class FVH:
             return False
 
         return True
+
+    @staticmethod
+    def _generate_file_prefix():
+        prefix = f'p{randint(1000, 9999)}'
+        return prefix
+
+    @staticmethod
+    def _generate_change_id():
+        change_id = ''.join([choice(ascii_letters) for __ in range(12)])
+        return change_id
 
     @staticmethod
     def _get_fvh_file() -> dict:
