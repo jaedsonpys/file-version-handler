@@ -14,6 +14,7 @@ from base64 import b64encode, b64decode
 from hashlib import md5
 
 from exceptions import RepoAlreadyExists
+from log import log
 
 DEFAULT_DIRNAME = '.fvh'
 FVH_FILE_LOCAL = '.fvh/.json'
@@ -100,6 +101,8 @@ class FVH:
         except BaseException as error:
             raise error
 
+        log('Repositório criado.', 'sucess')
+
     def add(self, files: list) -> bool:
         """Adiciona os arquivos
         para serem rastreados.
@@ -137,6 +140,7 @@ class FVH:
             new_add_data = {'file': file, 'hash': file_hash}
             fvh_content['add'][file_prefix] = new_add_data
 
+        log(f'{len(files)} arquivos adicionados.', 'sucess')
         self._save_fvh_file(fvh_content)
 
 
