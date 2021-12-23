@@ -11,6 +11,7 @@ from string import ascii_letters
 import sys
 import json
 from base64 import b64encode, b64decode
+from hashlib import md5
 
 from exceptions import RepoAlreadyExists
 
@@ -99,7 +100,48 @@ class FVH:
         except BaseException as error:
             raise error
 
+    def add(self, files: list) -> bool:
+        """Adiciona os arquivos
+        para serem rastreados.
+
+        Após isso, o FVH detectará
+        mudanças nos arquivos que foram
+        adicionados.
+
+        :param files: Lista de arquivos
+        :return: bool
+        """
+
+        fvh_content = self._get_fvh_file()
+        fvh_added_files = fvh_content.get('add')
+
+        # Se ainda não houver arquivos
+        # adicionados, pula para a próxima
+        # etapa.
+
+        if fvh_added_files:
+            # Filtrando arquivos
+            # que já estão sendo rastreados.
+
+            for fprefix, info in fvh_added_files.items():
+                if info['file'] in files:
+                    files.remove(info['file'])
+
+        for file in files:
+            file_prefix = self._generate_file_prefix()
+
+            with open(file, 'rb') as _file:
+                file_content = _file.read()
+                file_hash = md5(file_content).hexdigest()
+
+            new_add_data = {'file': file, 'hash': file_hash}
+            fvh_content['add'][file_prefix] = new_add_data
+
+        self._save_fvh_file(fvh_content)
+
 
 if __name__ == '__main__':
-    teste = FVH()
-    teste.create_new_repo()
+    test = FVH()
+    test.create_new_repo()
+
+    test.add(['fvh.py', 'exceptions/__init__.py'])
