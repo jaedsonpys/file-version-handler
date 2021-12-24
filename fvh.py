@@ -8,7 +8,6 @@ from datetime import datetime
 from random import randint, choice
 from string import ascii_letters
 
-import sys
 import json
 from base64 import b64encode, b64decode
 from hashlib import md5
@@ -72,7 +71,7 @@ class FVH:
     def _save_fvh_file(fvh_content: dict) -> None:
         try:
             with open(FVH_FILE_LOCAL, 'w') as fvh_file:
-                json.dump(fvh_content, fvh_file, indent=4)
+                json.dump(fvh_content, fvh_file, indent=4, ensure_ascii=False)
         except BaseException as error:
             print(error)
 
