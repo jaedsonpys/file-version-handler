@@ -125,6 +125,13 @@ class FVH:
         return difference
 
     def join_changes(self, fprefix: str) -> dict:
+        """Junta todas as alterações de um arquivo.
+
+        :param fprefix: Prefixo do arquivo (ID)
+        :return: Retorna o arquivo após juntar as
+        mudanças.
+        """
+
         all_changes_file = self._get_all_changes_of_file(fprefix)
         joined_changes = {}
 
@@ -225,6 +232,13 @@ class FVH:
         self._save_fvh_file(fvh_content)
 
     def change(self, description: str) -> None:
+        """Publica uma nova mudança no
+        histórico de versões do arquivo.
+
+        :param description: Descrição da change
+        :return: None
+        """
+
         fvh_content = self._get_fvh_file()
         fvh_added_files = fvh_content.get('add')
 
