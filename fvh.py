@@ -49,14 +49,14 @@ class FVH:
         return True
 
     @staticmethod
-    def _generate_file_prefix():
+    def _generate_file_prefix() -> str:
         prefix = f'p{randint(1000, 9999)}'
         return prefix
 
     @staticmethod
-    def _generate_change_id():
+    def _generate_change_id(fprefix: str) -> str:
         change_id = ''.join([choice(ascii_letters) for __ in range(12)])
-        return change_id
+        return f'{change_id}.{fprefix}'
 
     @staticmethod
     def _get_fvh_file() -> dict:
@@ -76,8 +76,80 @@ class FVH:
         except BaseException as error:
             print(error)
 
+    @staticmethod
+    def _create_change(file_data: dict, description: str) -> dict:
+        # Prepara as informações para criar
+        # uma nova change.
+
+        new_change = {'description': description,
+                      'base': None}
+
+        file_data_base64 = b64encode(json.dumps(file_data).encode())
+        new_change['base'] = file_data_base64.decode()
+
+        return new_change
+
+    @staticmethod
+    def _set_lines_number(file) -> dict:
+        # Esse método define a contagem
+        # de linhas em um dicionário para
+        # posteriormente, checar mudanças.
+        #
+        # Resultado: {1: 'Linha 1', 2: 'Linha 2'}
+
+        file_content = file.readlines()
+        file.close()
+
+        file_with_lines_number = {}
+        for c, l in enumerate(file_content):
+            c += 1
+            file_with_lines_number[c] = l.replace('\n', '')
+
+        return file_with_lines_number
+
+    def _check_difference(self, pre_change: dict, fprefix: str) -> dict:
+        # Para obter a diferença entre as mudanças
+        # dos arquivos, é necessário juntar todas
+        # as outras mudanças. Assim, obtemos
+        # a diferença e retornamos para que seja
+        # salva no arquivo FVH na chave "changes".
+
+        joined_changes = self.join_changes(fprefix)
+        difference = {}
+
+        for number, line in pre_change.items():
+            line_of_all_changes = joined_changes.get(str(number))
+
+            if line_of_all_changes != line:
+                difference[number] = line
+
+        return difference
+
+    def join_changes(self, fprefix: str) -> dict:
+        all_changes_file = self._get_all_changes_of_file(fprefix)
+        joined_changes = {}
+
+        for change in all_changes_file:
+            change_base = change['base'].encode()
+            change_file_data = json.loads(b64decode(change_base))
+
+            for number, line in change_file_data.items():
+                joined_changes[number] = line
+
+        return joined_changes
+
+    def _get_all_changes_of_file(self, fprefix: str) -> list:
+        fvh_changes = self._get_fvh_file()['changes']
+        all_changes = []
+
+        for change_id in fvh_changes.keys():
+            if fprefix in change_id:
+                all_changes.append(fvh_changes.get(change_id))
+
+        return all_changes
+
     def _get_last_change_of_file(self, fprefix: str) -> [dict, None]:
-        fvh_changes = self._get_fvh_file()['add']
+        fvh_changes = self._get_fvh_file()['changes']
         last_change_info = None
 
         for change_id in fvh_changes.keys():
@@ -113,7 +185,7 @@ class FVH:
 
         log('Repositório criado.', 'sucess')
 
-    def add(self, files: list) -> bool:
+    def add(self, files: list) -> None:
         """Adiciona os arquivos
         para serem rastreados.
 
@@ -153,9 +225,34 @@ class FVH:
         log(f'{len(files)} arquivos adicionados.', 'sucess')
         self._save_fvh_file(fvh_content)
 
+    def change(self, description: str) -> None:
+        fvh_content = self._get_fvh_file()
+        fvh_added_files = fvh_content.get('add')
+
+        for fprefix, info in fvh_added_files.items():
+            last_change_info = self._get_last_change_of_file(fprefix)
+
+            file_with_lines = self._set_lines_number(open(info['file']))
+            change_id = self._generate_change_id(fprefix)
+
+            if not last_change_info:
+                new_change = self._create_change(file_with_lines, description)
+                fvh_content['changes'][change_id] = new_change
+                continue
+
+            difference_of_changes = self._check_difference(file_with_lines, fprefix)
+
+            new_change = self._create_change(difference_of_changes, description)
+            fvh_content['changes'][change_id] = new_change
+
+        self._save_fvh_file(fvh_content)
+
 
 if __name__ == '__main__':
     test = FVH()
-    test.create_new_repo()
 
-    test.add(['fvh.py', 'exceptions/__init__.py'])
+    if not test.repo_already_exists():
+        test.create_new_repo()
+        test.add(['teste.txt'])
+
+    test.change(input('Description: '))
