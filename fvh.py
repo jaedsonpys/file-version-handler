@@ -80,10 +80,11 @@ class FVH:
         # Prepara as informações para criar
         # uma nova change.
 
-        new_change = {'description': description,
-                      'base': None}
+        new_change = {'description': description}
 
         file_data_base64 = b64encode(json.dumps(file_data).encode())
+
+        new_change['time'] = datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
         new_change['base'] = file_data_base64.decode()
 
         return new_change
@@ -124,6 +125,26 @@ class FVH:
 
         return difference
 
+    def _get_all_changes_of_file(self, fprefix: str) -> list:
+        fvh_changes = self._get_fvh_file()['changes']
+        all_changes = []
+
+        for change_id in fvh_changes.keys():
+            if fprefix in change_id:
+                all_changes.append(fvh_changes.get(change_id))
+
+        return all_changes
+
+    def _get_last_change_of_file(self, fprefix: str) -> [dict, None]:
+        fvh_changes = self._get_fvh_file()['changes']
+        last_change_info = None
+
+        for change_id in fvh_changes.keys():
+            if fprefix in change_id:
+                last_change_info = fvh_changes.get(change_id)
+
+        return last_change_info
+
     def join_changes(self, fprefix: str) -> dict:
         """Junta todas as alterações de um arquivo.
 
@@ -144,25 +165,14 @@ class FVH:
 
         return joined_changes
 
-    def _get_all_changes_of_file(self, fprefix: str) -> list:
+    def get_all_changes(self) -> dict:
         fvh_changes = self._get_fvh_file()['changes']
-        all_changes = []
+        all_changes = {}
 
-        for change_id in fvh_changes.keys():
-            if fprefix in change_id:
-                all_changes.append(fvh_changes.get(change_id))
+        for change_id, value in fvh_changes.items():
+            all_changes[change_id] = value
 
         return all_changes
-
-    def _get_last_change_of_file(self, fprefix: str) -> [dict, None]:
-        fvh_changes = self._get_fvh_file()['changes']
-        last_change_info = None
-
-        for change_id in fvh_changes.keys():
-            if fprefix in change_id:
-                last_change_info = fvh_changes.get(change_id)
-
-        return last_change_info
 
     def create_new_repo(self) -> None:
         """Cria um novo repositório

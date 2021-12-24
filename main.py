@@ -16,6 +16,10 @@ ARGS = {
     'init': {
         'options': ['--help'],
         'help': 'Inicia um novo repositório vazio.',
+    },
+    'log': {
+        'options': ['--help'],
+        'help': 'Mostra todos as changes realizadas.',
     }
 }
 
@@ -87,14 +91,25 @@ def args_redirect():
         if args[1] == '-desc':
             description = args[2].replace("'", '')
             fvh.change(description)
-
-            print()
-            print(fvh.join_changes('p8211'))
         elif args[1] == '--help':
             print(f'change: options: {command["options"]}')
             print(f'help: {command["help"]}')
         else:
             print(f'\033[31m{args[1]} não foi reconhecido. Tente: change --help\033[m')
+
+    elif args[0] == 'log':
+        if '--help' in args:
+            print(f'log: options: {command["options"]}')
+            print(f'help: {command["help"]}')
+            exit(0)
+
+        all_changes = fvh.get_all_changes()
+
+        for cid, info in all_changes.items():
+            print(f'Change {cid} - {info["description"]}')
+            print(f'    Time: {info["time"]}')
+            print(f'    Prefix: {cid.split(".")[-1]}')
+            print()
 
 
 args_redirect()
