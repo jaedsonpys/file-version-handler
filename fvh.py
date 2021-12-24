@@ -72,9 +72,19 @@ class FVH:
     def _save_fvh_file(fvh_content: dict) -> None:
         try:
             with open(FVH_FILE_LOCAL, 'w') as fvh_file:
-                json.dump(fvh_content, fvh_file, indent=2)
+                json.dump(fvh_content, fvh_file, indent=4)
         except BaseException as error:
             print(error)
+
+    def _get_last_change_of_file(self, fprefix: str) -> [dict, None]:
+        fvh_changes = self._get_fvh_file()['add']
+        last_change_info = None
+
+        for change_id in fvh_changes.keys():
+            if fprefix in change_id:
+                last_change_info = fvh_changes.get(change_id)
+
+        return last_change_info
 
     def create_new_repo(self) -> None:
         """Cria um novo repositório
